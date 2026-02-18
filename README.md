@@ -1,6 +1,5 @@
 # Todo_App_Flutter
 
-# Fake News Detector (Flutter App)
 
 Windows Flutter desktop app.
 
