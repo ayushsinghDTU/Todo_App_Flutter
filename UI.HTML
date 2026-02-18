@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Todo App Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f13;
+    --surface: #1a1a22;
+    --surface2: #22222e;
+    --surface3: #2c2c3a;
+    --accent: #7c6fec;
+    --accent2: #a598ff;
+    --text: #f0eff8;
+    --text2: #9997b0;
+    --text3: #6a6880;
+    --border: rgba(255,255,255,0.07);
+    --high: #ff6b7a;
+    --med: #ffb347;
+    --low: #52e3a0;
+    --radius: 20px;
+  }
+
+  body {
+    background: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    overflow-x: hidden;
+  }
+
+  /* Ambient background glow */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 800px; height: 600px;
+    background: radial-gradient(ellipse, rgba(124,111,236,0.15) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .scene {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+  }
+
+  .label {
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text3);
+    font-weight: 500;
+  }
+
+  /* Phone frame */
+  .phone {
+    width: 375px;
+    height: 780px;
+    background: var(--surface);
+    border-radius: 44px;
+    border: 1.5px solid rgba(255,255,255,0.1);
+    overflow: hidden;
+    position: relative;
+    box-shadow:
+      0 0 0 1px rgba(0,0,0,0.5),
+      0 40px 80px rgba(0,0,0,0.6),
+      inset 0 1px 0 rgba(255,255,255,0.1);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Notch */
+  .notch {
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 120px; height: 34px;
+    background: #0a0a0d;
+    border-radius: 0 0 20px 20px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .notch-cam {
+    width: 10px; height: 10px;
+    background: #1e1e26;
+    border-radius: 50%;
+    border: 1.5px solid #333;
+  }
+  .notch-mic {
+    width: 50px; height: 6px;
+    background: #1e1e26;
+    border-radius: 4px;
+  }
+
+  /* Status bar */
+  .status-bar {
+    padding: 14px 28px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    font-family: 'DM Mono', monospace;
+    flex-shrink: 0;
+  }
+  .status-icons { display: flex; gap: 6px; align-items: center; }
+  .status-icons svg { width: 16px; height: 16px; fill: var(--text2); }
+
+  /* App Header */
+  .app-header {
+    padding: 12px 24px 0;
+    flex-shrink: 0;
+  }
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+  .header-title { font-size: 26px; font-weight: 700; }
+  .header-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .header-actions { display: flex; gap: 6px; }
+  .icon-btn {
+    width: 36px; height: 36px;
+    background: var(--surface3);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s;
+    border: 1px solid var(--border);
+  }
+  .icon-btn:hover { background: var(--surface2); }
+  .icon-btn svg { width: 18px; height: 18px; stroke: var(--text2); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* Progress bar */
+  .progress-wrap {
+    margin: 14px 24px 0;
+    flex-shrink: 0;
+  }
+  .progress-track {
+    height: 5px;
+    background: var(--surface3);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 33%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    animation: fillBar 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+  @keyframes fillBar {
+    from { width: 0%; }
+    to { width: 33%; }
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    padding: 14px 24px 0;
+    flex-shrink: 0;
+  }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 8px 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text3);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab.active {
+    color: var(--accent2);
+    border-bottom-color: var(--accent);
+  }
+
+  /* Divider */
+  .divider { height: 1px; background: var(--border); margin: 8px 0; flex-shrink: 0; }
+
+  /* Todo list */
+  .todo-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 16px 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    scrollbar-width: none;
+  }
+  .todo-list::-webkit-scrollbar { display: none; }
+
+  /* Todo Card */
+  .todo-card {
+    background: var(--surface2);
+    border-radius: 16px;
+    padding: 14px 14px 14px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+    animation: slideIn 0.3s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+  .todo-card:hover {
+    background: var(--surface3);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  }
+  .todo-card.completed { opacity: 0.55; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .todo-card:nth-child(1) { animation-delay: 0.05s; }
+  .todo-card:nth-child(2) { animation-delay: 0.1s; }
+  .todo-card:nth-child(3) { animation-delay: 0.15s; }
+  .todo-card:nth-child(4) { animation-delay: 0.2s; }
+  .todo-card:nth-child(5) { animation-delay: 0.25s; }
+
+  .priority-bar {
+    width: 4px;
+    border-radius: 0 4px 4px 0;
+    align-self: stretch;
+    flex-shrink: 0;
+    min-height: 44px;
+    margin-left: 0;
+  }
+
+  .checkbox {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--surface3);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .checkbox.checked {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .checkbox svg { width: 12px; height: 12px; stroke: white; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+  .todo-content { flex: 1; min-width: 0; }
+  .todo-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .todo-title.done {
+    text-decoration: line-through;
+    color: var(--text3);
+  }
+  .todo-desc {
+    font-size: 11px;
+    color: var(--text3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 1px;
+  }
+  .todo-meta {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-top: 5px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 2px 7px;
+    border-radius: 6px;
+    text-transform: uppercase;
+  }
+  .badge.high { background: rgba(255,107,122,0.15); color: var(--high); }
+  .badge.med  { background: rgba(255,179,71,0.15);  color: var(--med); }
+  .badge.low  { background: rgba(82,227,160,0.15);  color: var(--low); }
+
+  .due-date {
+    display: flex; align-items: center; gap: 3px;
+    font-size: 10px; color: var(--text3);
+  }
+  .due-date svg { width: 10px; height: 10px; stroke: var(--text3); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .due-date.overdue { color: var(--high); }
+  .due-date.overdue svg { stroke: var(--high); }
+
+  .more-btn { padding: 4px 6px; color: var(--text3); cursor: pointer; font-size: 18px; line-height: 1; }
+
+  /* FAB */
+  .fab {
+    position: absolute;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--accent), #a06fec);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 14px 28px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(124,111,236,0.45);
+    transition: all 0.2s;
+    z-index: 5;
+    white-space: nowrap;
+  }
+  .fab:hover {
+    transform: translateX(-50%) translateY(-2px);
+    box-shadow: 0 12px 32px rgba(124,111,236,0.6);
+  }
+  .fab svg { width: 18px; height: 18px; stroke: white; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+  /* Bottom modal sheet (hidden by default, shows on add) */
+  .sheet-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 20;
+    display: flex;
+    align-items: flex-end;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    border-radius: 44px;
+    overflow: hidden;
+  }
+  .sheet-overlay.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .sheet {
+    width: 100%;
+    background: #1e1e2a;
+    border-radius: 24px 24px 0 0;
+    padding: 16px 20px 32px;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.32,0.72,0,1);
+    border-top: 1px solid var(--border);
+  }
+  .sheet-overlay.visible .sheet { transform: translateY(0); }
+  .sheet-handle {
+    width: 40px; height: 4px;
+    background: var(--surface3);
+    border-radius: 2px;
+    margin: 0 auto 18px;
+  }
+  .sheet-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+  .input-field {
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    width: 100%;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    margin-bottom: 10px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-field:focus { border-color: var(--accent); }
+  .input-field::placeholder { color: var(--text3); }
+  .sheet-label { font-size: 12px; color: var(--text2); font-weight: 600; margin-bottom: 8px; }
+  .priority-picker { display: flex; gap: 8px; margin-bottom: 12px; }
+  .p-btn {
+    flex: 1; padding: 8px;
+    border-radius: 10px; border: 1.5px solid transparent;
+    background: var(--surface3);
+    color: var(--text2); font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+  .p-btn.selected-high { background: rgba(255,107,122,0.15); border-color: var(--high); color: var(--high); }
+  .p-btn.selected-med  { background: rgba(255,179,71,0.15);  border-color: var(--med);  color: var(--med); }
+  .p-btn.selected-low  { background: rgba(82,227,160,0.15);  border-color: var(--low);  color: var(--low); }
+  .add-btn {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--accent), #a06fec);
+    color: white; border: none; border-radius: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 700;
+    cursor: pointer; margin-top: 8px;
+    transition: opacity 0.2s;
+  }
+  .add-btn:hover { opacity: 0.9; }
+
+  /* Section below phone */
+  .phone-label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text3);
+  }
+
+  .feature-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    max-width: 420px;
+  }
+  .pill {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .pill-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+</style>
+</head>
+<body>
+
+<div class="scene">
+  <div class="label">Flutter Todo App · Live Preview</div>
+
+  <div class="phone">
+    <!-- Notch -->
+    <div class="notch">
+      <div class="notch-mic"></div>
+      <div class="notch-cam"></div>
+    </div>
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="status-icons">
+        <!-- Signal -->
+        <svg viewBox="0 0 24 24"><rect x="2" y="16" width="3" height="6" rx="1"/><rect x="7" y="12" width="3" height="10" rx="1"/><rect x="12" y="8" width="3" height="14" rx="1"/><rect x="17" y="4" width="3" height="18" rx="1" opacity="0.3"/></svg>
+        <!-- WiFi -->
+        <svg viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"><path d="M5 12.55a11 11 0 0 1 14.08 0M1.42 9a16 16 0 0 1 21.16 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01" stroke-linecap="round"/></svg>
+        <!-- Battery -->
+        <svg viewBox="0 0 24 24"><rect x="2" y="7" width="18" height="10" rx="2" opacity="0.3"/><rect x="2" y="7" width="12" height="10" rx="2"/><path d="M22 11v2" stroke-width="2" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+
+    <!-- App Header -->
+    <div class="app-header">
+      <div class="header-top">
+        <div>
+          <div class="header-title">My Todos</div>
+          <div class="header-sub">1 / 3 completed</div>
+        </div>
+        <div class="header-actions">
+          <div class="icon-btn">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          </div>
+          <div class="icon-btn">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap">
+      <div class="progress-track">
+        <div class="progress-fill"></div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this, 'all')">All (3)</div>
+      <div class="tab" onclick="switchTab(this, 'active')">Active (2)</div>
+      <div class="tab" onclick="switchTab(this, 'done')">Done (1)</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Todo List -->
+    <div class="todo-list" id="todoList">
+      <!-- Cards rendered by JS -->
+    </div>
+
+    <!-- FAB -->
+    <button class="fab" onclick="openSheet()">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      Add Task
+    </button>
+
+    <!-- Add Sheet Overlay -->
+    <div class="sheet-overlay" id="sheetOverlay" onclick="closeSheet(event)">
+      <div class="sheet" onclick="event.stopPropagation()">
+        <div class="sheet-handle"></div>
+        <div class="sheet-title">New Task</div>
+        <input class="input-field" id="newTitle" placeholder="Task title *" type="text"/>
+        <input class="input-field" id="newDesc" placeholder="Description (optional)" type="text"/>
+        <div class="sheet-label">Priority</div>
+        <div class="priority-picker">
+          <button class="p-btn" onclick="selectPriority('high', this)">🔴 High</button>
+          <button class="p-btn selected-med" onclick="selectPriority('med', this)">🟡 Medium</button>
+          <button class="p-btn" onclick="selectPriority('low', this)">🟢 Low</button>
+        </div>
+        <button class="add-btn" onclick="addTodo()">Add Task</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="feature-pills">
+    <div class="pill"><div class="pill-dot"></div>Swipe to delete</div>
+    <div class="pill"><div class="pill-dot"></div>Priority levels</div>
+    <div class="pill"><div class="pill-dot"></div>Due dates</div>
+    <div class="pill"><div class="pill-dot"></div>Dark / Light mode</div>
+    <div class="pill"><div class="pill-dot"></div>Search & filter</div>
+    <div class="pill"><div class="pill-dot"></div>Undo delete</div>
+  </div>
+</div>
+
+<script>
+  const todos = [
+    { id: 1, title: 'Buy groceries', desc: 'Milk, eggs, bread, and fruits', priority: 'high', done: false, due: 'Tomorrow' },
+    { id: 2, title: 'Read a book', desc: '', priority: 'low', done: false, due: null },
+    { id: 3, title: 'Exercise for 30 minutes', desc: '', priority: 'med', done: true, due: null },
+  ];
+  let currentTab = 'all';
+  let selectedPriority = 'med';
+
+  function getFiltered() {
+    if (currentTab === 'active') return todos.filter(t => !t.done);
+    if (currentTab === 'done') return todos.filter(t => t.done);
+    return todos;
+  }
+
+  function renderTodos() {
+    const list = document.getElementById('todoList');
+    const filtered = getFiltered();
+    if (filtered.length === 0) {
+      list.innerHTML = `<div style="text-align:center;margin-top:60px;color:var(--text3)">
+        <div style="font-size:48px;margin-bottom:12px">✓</div>
+        <div style="font-size:14px">No tasks here!</div>
+      </div>`;
+      return;
+    }
+    list.innerHTML = filtered.map(todo => `
+      <div class="todo-card ${todo.done ? 'completed' : ''}" id="card-${todo.id}">
+        <div class="priority-bar" style="background: var(--${todo.priority === 'high' ? 'high' : todo.priority === 'med' ? 'med' : 'low'})"></div>
+        <div class="checkbox ${todo.done ? 'checked' : ''}" onclick="toggleTodo(${todo.id})">
+          ${todo.done ? `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>` : ''}
+        </div>
+        <div class="todo-content">
+          <div class="todo-title ${todo.done ? 'done' : ''}">${todo.title}</div>
+          ${todo.desc ? `<div class="todo-desc">${todo.desc}</div>` : ''}
+          <div class="todo-meta">
+            <span class="badge ${todo.priority === 'high' ? 'high' : todo.priority === 'med' ? 'med' : 'low'}">
+              ${todo.priority === 'high' ? 'High' : todo.priority === 'med' ? 'Medium' : 'Low'}
+            </span>
+            ${todo.due ? `<span class="due-date">
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              ${todo.due}
+            </span>` : ''}
+          </div>
+        </div>
+        <div class="more-btn" onclick="deleteTodo(${todo.id})">·<br>·<br>·</div>
+      </div>
+    `).join('');
+    updateCounts();
+  }
+
+  function updateCounts() {
+    const all = todos.length;
+    const active = todos.filter(t => !t.done).length;
+    const done = todos.filter(t => t.done).length;
+    document.querySelectorAll('.tab')[0].textContent = `All (${all})`;
+    document.querySelectorAll('.tab')[1].textContent = `Active (${active})`;
+    document.querySelectorAll('.tab')[2].textContent = `Done (${done})`;
+    document.querySelector('.header-sub').textContent = `${done} / ${all} completed`;
+    const fill = document.querySelector('.progress-fill');
+    fill.style.transition = 'width 0.5s cubic-bezier(0.4,0,0.2,1)';
+    fill.style.width = all ? Math.round((done/all)*100) + '%' : '0%';
+  }
+
+  function toggleTodo(id) {
+    const todo = todos.find(t => t.id === id);
+    if (todo) todo.done = !todo.done;
+    renderTodos();
+  }
+
+  function deleteTodo(id) {
+    const idx = todos.findIndex(t => t.id === id);
+    if (idx > -1) todos.splice(idx, 1);
+    renderTodos();
+  }
+
+  function switchTab(el, tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    currentTab = tab;
+    renderTodos();
+  }
+
+  function openSheet() {
+    document.getElementById('sheetOverlay').classList.add('visible');
+    setTimeout(() => document.getElementById('newTitle').focus(), 400);
+  }
+
+  function closeSheet(e) {
+    document.getElementById('sheetOverlay').classList.remove('visible');
+    document.getElementById('newTitle').value = '';
+    document.getElementById('newDesc').value = '';
+  }
+
+  function selectPriority(p, btn) {
+    selectedPriority = p;
+    document.querySelectorAll('.p-btn').forEach(b => {
+      b.className = 'p-btn';
+    });
+    btn.classList.add(`selected-${p}`);
+  }
+
+  function addTodo() {
+    const title = document.getElementById('newTitle').value.trim();
+    if (!title) {
+      document.getElementById('newTitle').style.borderColor = 'var(--high)';
+      setTimeout(() => document.getElementById('newTitle').style.borderColor = '', 1200);
+      return;
+    }
+    const desc = document.getElementById('newDesc').value.trim();
+    todos.unshift({
+      id: Date.now(),
+      title, desc,
+      priority: selectedPriority,
+      done: false,
+      due: null,
+    });
+    closeSheet();
+    currentTab = 'all';
+    document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === 0));
+    renderTodos();
+  }
+
+  // Keyboard support
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeSheet();
+    if (e.key === 'Enter' && document.getElementById('sheetOverlay').classList.contains('visible')) addTodo();
+  });
+
+  renderTodos();
+</script>
+</body>
+</html>
